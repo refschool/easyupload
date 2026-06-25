@@ -2,7 +2,7 @@
 
 <?php if (!empty($error)): ?>
 
-    <p class="download__error">
+    <p class="text-danger">
         <?= \App\Core\View::escape($error) ?>
     </p>
 
