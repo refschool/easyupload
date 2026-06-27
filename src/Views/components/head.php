@@ -16,4 +16,5 @@
 ></script>
 
 <link rel="stylesheet" href="/assets/css/app.css">
+<link rel="stylesheet" href="/assets/css/social.css">
 <script defer src="/assets/js/app.js"></script>
