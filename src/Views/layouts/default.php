@@ -10,7 +10,7 @@
 <body>
 
 <?php \App\Core\View::partial('components/header'); ?>
-
+<?php \App\Core\View::partial('components/background'); ?>
 <main>
     <?= $content ?>
 </main>
