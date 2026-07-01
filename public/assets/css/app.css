@@ -355,6 +355,10 @@ main {
     border: none;
 }
 
+.download__btn .bi-download {
+    color: #292929;
+}
+
 @media (min-width: 675px) {
     .download__btn {
         width: fit-content;
