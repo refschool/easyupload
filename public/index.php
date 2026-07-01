@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 define('PROJECT_ROOT', dirname(__DIR__));
 
-require_once('../src/webcron.php');
-
 use App\Core\Request;
 use App\Core\Router;
 use App\Services\TurnstileService;
@@ -31,6 +29,9 @@ spl_autoload_register(static function (string $class): void {
 
 $dotenv = Dotenv::createImmutable(PROJECT_ROOT);
 $dotenv->load();
+
+// Web-cron : doit tourner après dotenv (il a besoin de $_ENV['DB_DATABASE'])
+require_once('../src/webcron.php');
 
 $request = new Request();
 $router = new Router();
