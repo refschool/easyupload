@@ -94,9 +94,8 @@ function supprimerFichiers(string $chemin, string $uploadsDir): bool
         return false;
     }
 
-    // Garde-fou : on ne touche qu'au contenu de uploads/
-    $dansUploads = $cible === $uploadsDir
-        || str_starts_with($cible, $uploadsDir . DIRECTORY_SEPARATOR);
+    // Garde-fou : on ne touche qu'au CONTENU de uploads/ (jamais la racine)
+    $dansUploads = str_starts_with($cible, $uploadsDir . DIRECTORY_SEPARATOR);
 
     if (!$dansUploads) {
         setLog("Webcron : chemin hors uploads ignoré ($cible)", 'ERROR');
