@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 define('PROJECT_ROOT', dirname(__DIR__));
 
+require_once('../src/webcron.php');
+
 use App\Core\Request;
 use App\Core\Router;
 use App\Services\TurnstileService;
