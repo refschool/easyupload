@@ -10,15 +10,15 @@
         <strong><?= \App\Core\View::escape($file) ?></strong>
     </p>
 
-    <button
+    <a
         class="btn btn-primary download__btn"
-        href="/download/file?file=<?= urlencode($file) ?>" 
-        aria-label="Télécharger le fichier <?= \App\Core\View::escape($file) ?>" 
+        href="/download/file?file=<?= urlencode($file) ?>"
+        aria-label="Télécharger le fichier <?= \App\Core\View::escape($file) ?>"
         download
-        >
+    >
         <i class="bi bi-download" aria-hidden="true"></i>
         Télécharger
-    </button>
+    </a>
 
     <?php \App\Core\View::partial('components/social-share', [
         'shareUrl'  => $_ENV['WEB_URL'] . 'download?file=' . urlencode($file),

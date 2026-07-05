@@ -4,13 +4,27 @@ declare(strict_types=1);
 
 use Dotenv\Dotenv;
 
-require_once __DIR__ . '/vendor/autoload.php';
+// Racine du projet = le dossier qui contient vendor/ (robuste : le script marche
+// aussi bien lancé depuis migrations/ que copié à la racine).
+$projectRoot = __DIR__;
+while ($projectRoot !== dirname($projectRoot) && !is_file($projectRoot . '/vendor/autoload.php')) {
+    $projectRoot = dirname($projectRoot);
+}
+if (!is_file($projectRoot . '/vendor/autoload.php')) {
+    fwrite(STDERR, "Racine du projet introuvable (dossier vendor/ manquant)." . PHP_EOL);
+    exit(1);
+}
 
-$dotenv = Dotenv::createImmutable(__DIR__);
+require_once $projectRoot . '/vendor/autoload.php';
+
+$dotenv = Dotenv::createImmutable($projectRoot);
 $dotenv->load();
 
+// Résolution du chemin BDD cohérente avec l'app (ancrage racine du projet).
+// Évite le piège SQLite qui crée silencieusement une base vide si le chemin est faux.
 $dbFile = $_ENV['DB_DATABASE'] ?? 'bdd.db';
-$dbPath = __DIR__ . DIRECTORY_SEPARATOR . ltrim($dbFile, DIRECTORY_SEPARATOR);
+$estAbsolu = str_starts_with($dbFile, '/') || preg_match('#^[A-Za-z]:[\\\\/]#', $dbFile);
+$dbPath = $estAbsolu ? $dbFile : $projectRoot . DIRECTORY_SEPARATOR . ltrim($dbFile, DIRECTORY_SEPARATOR);
 
 if (!is_file($dbPath)) {
     fwrite(STDERR, "Base introuvable: {$dbPath}" . PHP_EOL);

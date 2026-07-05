@@ -6,54 +6,56 @@ require_once __DIR__ . '/log.php';
  * Web-cron : supprime les FICHIERS des pièces jointes de plus de 7 jours.
  * La base de données n'est PAS modifiée (lecture seule).
  * Inclus depuis public/index.php (après chargement de dotenv) → silencieux.
+ *
+ * Robustesse : un cron de nettoyage ne doit JAMAIS faire tomber le site.
+ * Tout échec (BDD indisponible, table absente, permissions…) → log + return.
  */
 
-$dureeVie = 7 * 24 * 3600;        // 7 jours en secondes
-$seuil    = time() - $dureeVie;   // tout ce créé avant ce timestamp est périmé
-
-// --- Connexion BDD (lecture seule) ---
 try {
-    $dbPath = __DIR__ . '/../' . $_ENV['DB_DATABASE'];
+    $dureeVie = 7 * 24 * 3600;        // 7 jours en secondes
+    $seuil    = time() - $dureeVie;   // créé avant ce timestamp = périmé
+
+    // --- Connexion BDD (lecture seule) ---
+    $dbPath = __DIR__ . '/../' . ($_ENV['DB_DATABASE'] ?? 'bdd.db');
     $pdo = new PDO('sqlite:' . $dbPath);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    setLog("Connexion BDD échouée (webcron) : " . $e->getMessage(), 'ERROR');
-    return; // inclus depuis index.php : on abandonne proprement
-}
 
-// --- Garde-fou : on ne supprimera que dans le dossier uploads/ ---
-$uploadsDir = realpath(__DIR__ . '/../uploads');
-if ($uploadsDir === false) {
-    setLog("Webcron : dossier uploads introuvable, abandon.", 'ERROR');
+    // --- Garde-fou : on ne supprimera que dans le dossier uploads/ ---
+    $uploadsDir = realpath(__DIR__ . '/../uploads');
+    if ($uploadsDir === false) {
+        return; // dossier uploads absent → rien à nettoyer
+    }
+
+    // --- On scanne les pièces jointes périmées ---
+    $rows       = $pdo->query('SELECT id, date_creation, chemin FROM piece_jointe')->fetchAll(PDO::FETCH_ASSOC);
+    $supprimees = 0;
+    $ignorees   = 0;
+
+    foreach ($rows as $row) {
+        $ts = toTimestamp($row['date_creation']);
+
+        // Date illisible → on ne supprime pas dans le doute (impact minimal)
+        if ($ts === null) {
+            $ignorees++;
+            continue;
+        }
+
+        // Pas encore périmée → on garde
+        if ($ts >= $seuil) {
+            continue;
+        }
+
+        if (supprimerFichiers($row['chemin'], $uploadsDir)) {
+            $supprimees++;
+        }
+    }
+
+    if ($supprimees > 0 || $ignorees > 0) {
+        setLog("Webcron : $supprimees fichier(s) supprimé(s), $ignorees ignoré(s) (date illisible).", 'TRACE');
+    }
+} catch (Throwable $e) {
+    setLog("Webcron abandonné : " . $e->getMessage(), 'ERROR');
     return;
-}
-
-// --- On scanne toutes les pièces jointes ---
-$rows       = $pdo->query('SELECT id, date_creation, chemin FROM piece_jointe')->fetchAll(PDO::FETCH_ASSOC);
-$supprimees = 0;
-$ignorees   = 0;
-
-foreach ($rows as $row) {
-    $ts = toTimestamp($row['date_creation']);
-
-    // Date illisible → on ne supprime pas dans le doute (impact minimal)
-    if ($ts === null) {
-        $ignorees++;
-        continue;
-    }
-
-    // Pas encore périmée → on garde
-    if ($ts >= $seuil) {
-        continue;
-    }
-
-    if (supprimerFichiers($row['chemin'], $uploadsDir)) {
-        $supprimees++;
-    }
-}
-
-if ($supprimees > 0 || $ignorees > 0) {
-    setLog("Webcron : $supprimees fichier(s) supprimé(s), $ignorees ignoré(s) (date illisible).", 'TRACE');
 }
 
 // ---------------------------------------------------------------

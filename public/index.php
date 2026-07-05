@@ -31,7 +31,7 @@ $dotenv = Dotenv::createImmutable(PROJECT_ROOT);
 $dotenv->load();
 
 // Web-cron : doit tourner après dotenv (il a besoin de $_ENV['DB_DATABASE'])
-require_once('../src/webcron.php');
+//require_once PROJECT_ROOT . '/src/webcron.php';
 
 $request = new Request();
 $router = new Router();

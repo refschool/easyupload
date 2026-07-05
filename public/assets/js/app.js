@@ -33,6 +33,10 @@ function main() {
   // Défini l'URL et le formulaire
   const url = `${location.origin}/upload`;
 
+  // Les pages autres que l'upload (ex: /download) n'ont pas de formulaire :
+  // on sort pour éviter un crash sur les addEventListener ci-dessous.
+  if (!form) return;
+
   /**
    * Evènements
    * on fait un check du formulaire
